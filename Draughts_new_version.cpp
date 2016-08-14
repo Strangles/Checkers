@@ -1,3 +1,6 @@
+#include <string>
+
+
 template <typename Typ> class que //это класс очереди, то, что не описано комментариями в принципе тебе не нужно, но могу рассказать PS я еще не все тестировал, совсем не все :с
 {
 private:
@@ -191,6 +194,8 @@ public:
 	}
 };
 
+
+
 struct position//координаты, решил сделать структурой
 {
 	int x;
@@ -261,6 +266,7 @@ public:
 };
 
 
+
 class Draught {
 private:
 	bool dame = false;//дамка не дамка
@@ -309,6 +315,8 @@ public:
 	  delete pos;
 	}
 };
+
+
 
 class pole
 {
@@ -428,4 +436,69 @@ public:
     delete[] PL;
     delete[] Pol;
   }
+};
+
+
+
+class Player//игрок, у него есть имя, ход/неход, цве, очки.
+{
+private:
+	bool turn;
+	std::string name;
+	char color;
+	int points;
+public:
+	Player()
+	{
+		turn = false;
+		points = 0;
+	}
+
+	Player(bool turn, std::string name, char color)
+	{
+
+	}
+
+	void setTurn(bool a)
+	{
+		this->turn = a;
+	}
+
+	bool getTurn()
+	{
+		return this->turn;
+	}
+	
+	void setColor(char a)
+	{
+		this->color = a;
+	}
+
+	char getColor()
+	{
+		return this->color;
+	}
+	
+	void setPoints(int a)
+	{
+		this->points = a;
+	}
+
+	int getPoints()
+	{
+		return this->points;
+	}
+	void addPoint()
+	{
+		this->points++;
+	}
+	void setName(std::string a)
+	{
+		this->name = a;
+	}
+	void getName()
+	{
+		return this->name;
+	}
+
 };
