@@ -134,6 +134,7 @@ public:
 	{
 	  trio smt=arr.get(q_position);
 	  q_position=smt.next;
+	  return smt.obj;
 	}
 	void pop_el(int ind)
 	{
@@ -194,8 +195,6 @@ public:
 	}
 };
 
-
-
 struct position//координаты, решил сделать структурой
 {
 	int x;
@@ -204,27 +203,6 @@ struct position//координаты, решил сделать структу�
 	{
 	  x=b.x;
 	  y=b.y;
-	}
-	//разные операторы для изменения координат
-	void operator >>()
-	{
-	  x++;
-	  y++;
-	}
-	void operator <<()
-	{
-	  x--;
-	  y++;
-	}
-	void operator ++()
-	{
-	  x++;
-	  y--;
-	}
-	void operator --()
-	{
-	  x--;
-	  y--;
 	}
 	bool operator ==(position b)
 	{
@@ -246,23 +224,45 @@ struct position//координаты, решил сделать структу�
 class Move
 {
 public:
-	bool type;
 	position start;
 	position finish;
-	static const bool hod=false;
-	static const bool rubit=true;
-	bool operator =(Move b)
+	int id_shashki;
+	void operator =(Move b)
 	{
 	  start=b.start;
 	  finish=b.finish;
-	  type=b.type;
+	  id_shashki=b.id_shashki;
 	}
 	~Move()
 	{
 	  delete start;
 	  delete finish;
-	  delete type;
+	  delete id_shashki;
 	}
+};
+
+
+class kill
+{
+public:
+  position start;
+  position finish;
+  int id_killer; //та, что рубит
+  int id_killed; //рубимая
+  void operator =(kill b)
+  {
+    start=b.start;
+    finish=b.finish;
+    id_killer=b.id_killer;
+    id_killed=b.id_killed;
+  }
+  ~kill()
+  {
+    delete start;
+    delete finish;
+    delete id_killer;
+    delete id_killed;
+  }
 };
 
 
@@ -321,14 +321,34 @@ public:
 class pole
 {
 private:
-  static const char Black=0; //немножко констант для поля, ну, понимаешь, зачем так делается? это не цвет клеток, а цвет шашек на них
+  static const char Black=2; //немножко констант для поля, ну, понимаешь, зачем так делается? это не цвет клеток, а цвет шашек на них
   static const char White=1;
-  static const char Empty=-1;
+  static const char Empty=0;
   static const int N=8;
   char **PL; //само поле типа
   int **Pol
   que <Draught> White_och;
   que <Draught> Black_och;
+  static void up_right(position &a)
+  {
+    a.x++;
+    a.y++;
+  }
+  static void up_left(position &a)
+  {
+    a.x--;
+    a.y++;
+  }
+  static void down_right(position &a)
+  {
+    a.x++;
+    a.y--;
+  }
+  static void down_left(position &a)
+  {
+    a.x--;
+    a.y--;
+  }
 public:
   // первая координата пусть будет х, вторая - у (x - по горизонтали)
   pole() //конструктор
@@ -395,15 +415,45 @@ public:
       }
      //вот до этого места
   }
-  void mov(Move b)//делает ход или рубит, если надо
+  void mov(Move b)//делает ход
+  {
+    int color=get_color_cell(b.start);
+    int id=b.id_shashki;
+    Draught s;
+    if (color==Draught::Black)
+    {
+      s=Black_och.get_el(id);
+      s.mov(b);
+      if (b.finish.y==0)
+	s.getDame();
+      Black_och.prisv_el(id, s);
+      PL[b.start.x][b.start.y]=Empty;
+      PL[b.finish.x][b.finish.y]=Black;
+    }
+    else
+    {
+      s=White_och.get_el(id);
+      s.mov(b);
+      if (b.finish.y==N-1)
+	s.getDame();
+      White_och.prisv_el(id, s);
+      PL[b.start.x][b.start.y]=Empty;
+      PL[b.finish.x][b.finish.y]=Black;
+    }
+  }
+  int get_color_cell(position b)//узнать цвет клетки 2 - черная, 1 - белая, 0 - пустая
+  {
+    return int(PL[b.x][b.y]);
+  }
+  void Kill_shashka(kill b)//рубит шашку
   {
     
   }
-  que <Move> get_Kill_white()//возвращает очередь ходов для белых, где рубят черные фигуры
+  que <kill> get_Kill_white()//возвращает очередь ходов для белых, где рубят черные фигуры
   {
     
   }
-  que <Move> get_Kill_black()//возвращает очередь ходов для черных, где тоже рубят
+  que <kill> get_Kill_black()//возвращает очередь ходов для черных, где тоже рубят
   {
     
   }
@@ -416,13 +466,20 @@ public:
   {
     
   }
-  que <Draught> get_black_positions()//возвращает очередь, в которой позиции черных
+  que <Draught> get_black_positions()//возвращает очередь, в которой позиции черных, в целях оптимизации использовать только для визуализатора стоит
   {
     return Black_och;
   }
-  que <Draught> get_white_positions()//возвращает очередь, в которой позиции белых
+  que <Draught> get_white_positions()//возвращает очередь, в которой позиции белых, аналогично
   {
     return White_och;
+  }
+  Draught get_with_id(int id, int color) //черная - 2, белая - 1 для поля color также можно написать Draught::Black или Draught::White, то есть Some_pole.get_with_id(2, Draught::White) 
+  {
+    if (color==Draught::Black)
+      return Black_och.get_el(id);
+    else
+      return White_och.get_el(id);
   }
   ~pole()
   {
